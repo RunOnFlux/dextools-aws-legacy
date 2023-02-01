@@ -26,7 +26,8 @@ functions:
     handler: handler.allTokenUpdateHandler
     events:
       # Invoke Lambda function every minute
-      - schedule: rate(5 minute)  
+      - schedule: 
+          rate: rate(5 minutes)  
 
 resources:
   Resources:
