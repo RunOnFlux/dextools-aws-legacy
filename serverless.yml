@@ -29,6 +29,10 @@ functions:
       - schedule: 
           rate: rate(5 minutes)  
 
+package:
+  patterns:
+    - '!scripts/**'
+
 resources:
   Resources:
     cacheTable:
