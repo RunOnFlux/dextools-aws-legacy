@@ -1,0 +1,46 @@
+service: dexscan-aws
+
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: nodejs16.x
+  environment:
+    TOKENS_TABLE: tokens-table
+    PGHOST: ${param:PGHOST}
+    PGUSER: ${param:PGUSER}
+    PGDATABASE: ${param:PGDATABASE}
+    PGPASSWORD: ${param:PGPASSWORD}
+    PGPORT: 5432
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+      Resource: "*"
+
+functions:
+  allTokenUpdateHandler:
+    handler: handler.allTokenUpdateHandler
+    events:
+      # Invoke Lambda function every minute
+      - schedule: rate(5 minute)  
+
+resources:
+  Resources:
+    cacheTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: tokens-table
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+        TimeToLiveSpecification:
+          AttributeName: ttl
+          Enabled: true
+        BillingMode: PAY_PER_REQUEST

@@ -1,0 +1,19 @@
+{
+  "name": "dexscan-aws",
+  "version": "1.0.0",
+  "description": "Example of creating a function that runs as a cron job using the serverless `schedule` event",
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.262.0",
+    "@aws-sdk/lib-dynamodb": "^3.262.0",
+    "axios": "^1.2.6",
+    "axios-retry": "^3.4.0",
+    "dotenv": "^16.0.3",
+    "luxon": "^3.2.1",
+    "pact-lang-api": "^4.3.6",
+    "pg": "^8.9.0",
+    "pg-format": "^1.0.4",
+    "zipson": "^0.2.12"
+  }
+}
