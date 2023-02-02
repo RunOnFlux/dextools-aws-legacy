@@ -9,6 +9,7 @@ const allTokenUpdateHandler = async (event) => {
 const kdaPriceUpdate = require("./src/kdaPriceUpdate");
 const kdaPriceUpdateHandler = async (event) => {
   const client = new Client();
+  await client.connect();
   await kdaPriceUpdate(client);
 };
 
