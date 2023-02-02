@@ -1,5 +1,6 @@
 const { DateTime } = require("luxon");
 const format = require("pg-format");
+const { getAllTokensFromDB, getKDAMap, getCandleOrBuild } = require("../helpers");
 
 const getTransactionMap = async (
   client,
@@ -78,25 +79,12 @@ const candleUpdate = async (client) => {
   let startMinute = endMinute.minus({ minutes: 4 });
 
   // GET Tokens
-  console.log(`get tokens for dex ${dex}`);
-  const tokensResp = await client.query(
-    `SELECT ticker, address FROM token_info t INNER JOIN dex_info d ON t.address = d.token_address WHERE dex = $1 AND t.address != 'coin'`,
-    [dex]
-  );
-
-  const tokens = tokensResp.rows;
+  const tokenMap = await getAllTokensFromDB();
+  const tokens = Object.keys(tokenMap);
 
   // GET KDA Price
   console.log(`get kda prices`);
-  const kdaPriceResp = await client.query(
-    "SELECT timestamp, price FROM kda_price WHERE timestamp >= $1 AND timestamp <= $2",
-    [startMinute.toJSDate(), endMinute.toJSDate()]
-  );
-  const kdaPriceMap = kdaPriceResp.rows.reduce((p, row) => {
-    const { timestamp, price } = row;
-    p[timestamp] = parseFloat(price);
-    return p;
-  }, {});
+  const kdaPriceMap = await getKDAMap(client)
   console.log(`built kda price map`);
 
   // GET All transactions within the minute
@@ -109,7 +97,8 @@ const candleUpdate = async (client) => {
 
   // FOR ALL TOKENS
   for (let token of tokens) {
-    console.log(`Processing for ${token.ticker}`);
+    const ticker = tokenMap[token];
+    console.log(`Processing for ${ticker}`);
     let start = startMinute;
     const transactions = transactionMap[token.address];
     let candles = [];
@@ -118,7 +107,7 @@ const candleUpdate = async (client) => {
       if (start.equals(startMinute)) {
         const prevCloseR = await client.query(
           `SELECT close FROM candles WHERE ticker = $1 AND timestamp < $2 ORDER BY timestamp DESC LIMIT 1`,
-          [token.ticker, startMinute.toJSDate()]
+          [ticker, startMinute.toJSDate()]
         );
         prevClose = parseFloat(prevCloseR.rows[0].close);
       } else {
@@ -127,7 +116,7 @@ const candleUpdate = async (client) => {
       if (transactions && start.toJSDate() in transactions) {
         const info = transactions[start.toJSDate()];
         candles.push([
-          token.ticker,
+          ticker,
           start.toJSDate(),
           Math.min(info.low, prevClose),
           Math.max(info.high, prevClose),
@@ -137,7 +126,7 @@ const candleUpdate = async (client) => {
         ]);
       } else {
         candles.push([
-          token.ticker,
+          ticker,
           start.toJSDate(),
           prevClose,
           prevClose,
@@ -151,7 +140,7 @@ const candleUpdate = async (client) => {
     }
 
     console.log(
-      `built ${candles.length} candles for ${token.ticker}`
+      `built ${candles.length} candles for ${ticker}`
     );
     const insertQuery = `
       INSERT INTO candles (ticker, timestamp, low, high, open, close, volume) 
@@ -161,7 +150,7 @@ const candleUpdate = async (client) => {
     `;
     const s = await client.query(format(insertQuery, candles));
     console.log(
-      `inserted ${s.rowCount} candles for ${token.ticker}`
+      `inserted ${s.rowCount} candles for ${ticker}`
     );
   }
 };

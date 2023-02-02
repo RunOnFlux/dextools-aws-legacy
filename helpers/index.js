@@ -1,7 +1,11 @@
 const Pact = require("pact-lang-api");
 const { DateTime } = require("luxon");
 const format = require("pg-format");
-const pairs = require("../tokens.json");
+const { GetCommand } = require("@aws-sdk/lib-dynamodb");
+const { DynamoDBClient } = require("@aws-sdk/client-dynamodb");
+const { parse } = require("zipson");
+
+const CACHE_TABLE = process.env.TOKENS_TABLE || false;
 
 const GAS_PRICE = 0.00000001;
 const MAX_CHAIN_ID = 20;
@@ -99,21 +103,18 @@ const getNearestKDAPrice = (kdaPriceMap, date) => {
   return kdaPriceMap[kdaMinute];
 };
 
-const getAllTokens = async () => {
-  const mainnetPairs = pairs.pairs.mainnet;
-  const tokenMap = Object.keys(mainnetPairs).reduce((p, c) => {
-    const pairInfo = mainnetPairs[c];
-    if (!pairInfo.isVerified) {
-      return p;
-    }
-    const [address0, address1] = c.split(":");
-    const { token0, token1 } = pairInfo;
-    p[address0] = token0;
-    p[address1] = token1;
-    return p;
-  }, {});
-  delete tokenMap['coin'];
-  return tokenMap;
+const getAllTokensFromDB = async () => {
+  const ddbClient = new DynamoDBClient({ region: "us-east-1" });
+  const item = {
+    TableName: CACHE_TABLE,
+    Key: {
+      id: "TOKENS",
+    },
+  };
+  const value = await ddbClient.send(new GetCommand(item));
+  const { Item } = value;
+  const { cachedValue } = Item;
+  return parse(cachedValue);
 };
 
 const buildFirstCandle = async (
@@ -167,6 +168,6 @@ module.exports = {
   getTokenAddressFromRef,
   getKDAMap,
   getNearestKDAPrice,
-  getAllTokens,
+  getAllTokensFromDB,
   getCandleOrBuild,
 };

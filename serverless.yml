@@ -5,6 +5,15 @@ frameworkVersion: '3'
 provider:
   name: aws
   runtime: nodejs16.x
+  vpc:
+    securityGroupIds:
+      - sg-029df8e48faf39ec5
+    subnetIds:
+      - subnet-0ba99baf55334aa37
+      - subnet-0e2f1f8fb76211642
+      - subnet-040dc7170e0e988f0
+      - subnet-061925e9b651a9fd1
+      - subnet-013d64eed3bc96593
   environment:
     TOKENS_TABLE: tokens-table
     PGHOST: ${param:PGHOST}
@@ -20,6 +29,10 @@ provider:
         - dynamodb:GetItem
         - dynamodb:PutItem
       Resource: "*"
+    - Effect: Allow
+      Action:
+        - rds-db:connect
+      Resource: arn:aws:rds:us-east-1:283169336544:db-proxy:prx-0b51bb42d90f6a22f
 
 functions:
   allTokenUpdateHandler:
@@ -28,6 +41,12 @@ functions:
       # Invoke Lambda function every minute
       - schedule: 
           rate: rate(5 minutes)  
+  kdaPriceUpdateHandler:
+    handler: handler.kdaPriceUpdateHandler
+    events:
+      # Invoke Lambda function every minute
+      - schedule: 
+          rate: rate(1 minute)  
 
 package:
   patterns:

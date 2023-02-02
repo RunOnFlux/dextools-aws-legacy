@@ -1,7 +1,7 @@
 const { DateTime } = require("luxon");
 const { Client } = require("pg");
 const format = require("pg-format");
-const { getKDAMap, getNearestKDAPrice, getAllTokens, getCandleOrBuild } = require("../helpers");
+const { getKDAMap, getNearestKDAPrice, getAllTokensFromDB, getCandleOrBuild } = require("../helpers");
 require("dotenv").config();
 
 const mainClient = new Client();
@@ -17,7 +17,7 @@ const END_DATE = DateTime.now().startOf("minute").minus({ minutes: 1 });
   const kdaPriceMap = await getKDAMap(mainClient);
   console.log("Built KDA Price Map");
 
-  const tokenMap = await getAllTokens();
+  const tokenMap = await getAllTokensFromDB();
   const tokens = Object.keys(tokenMap);
 
   for (let token of tokens) {

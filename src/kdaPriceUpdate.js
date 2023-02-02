@@ -47,7 +47,7 @@ const kdaPriceUpdate = async (client) => {
   let done = false;
   while (retryTimes < 5) {
     try {
-      console.log("getting kda price from kucoin");
+      console.log("getting kda price");
       const kdaPrice = await getLatestFromGate();
       console.log("price is " + kdaPrice);
       const values = [currMinute, kdaPrice];
@@ -61,7 +61,7 @@ const kdaPriceUpdate = async (client) => {
       retryTimes += 1;
       await new Promise((r) => setTimeout(r, 1000));
       console.log(
-        "FAILED TO UPDATE USING KUCOIN, RETRYING " + retryTimes + " times"
+        "FAILED TO UPDATEe, RETRYING " + retryTimes + " times"
       );
     }
   }
