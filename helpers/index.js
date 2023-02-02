@@ -5,7 +5,7 @@ const { GetCommand } = require("@aws-sdk/lib-dynamodb");
 const { DynamoDBClient } = require("@aws-sdk/client-dynamodb");
 const { parse } = require("zipson");
 
-const CACHE_TABLE = process.env.TOKENS_TABLE || false;
+const CACHE_TABLE = process.env.TOKENS_TABLE || "tokens-table";
 
 const GAS_PRICE = 0.00000001;
 const MAX_CHAIN_ID = 20;

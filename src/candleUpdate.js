@@ -1,6 +1,6 @@
 const { DateTime } = require("luxon");
 const format = require("pg-format");
-const { getAllTokensFromDB, getKDAMap, getCandleOrBuild } = require("../helpers");
+const { getAllTokensFromDB, getKDAMap } = require("../helpers");
 
 const getTransactionMap = async (
   client,
