@@ -13,7 +13,6 @@ provider:
       - subnet-0e2f1f8fb76211642
       - subnet-040dc7170e0e988f0
       - subnet-061925e9b651a9fd1
-      - subnet-013d64eed3bc96593
   environment:
     TOKENS_TABLE: tokens-table
     PGHOST: ${param:PGHOST}
