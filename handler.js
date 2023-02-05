@@ -27,9 +27,17 @@ const hourCandlesUpdateHandler = async (event) => {
   await hourCandlesUpdate(client);
 };
 
+const highLowUpdate = require("./src/highLowUpdate");
+const highLowUpdateHandler = async (event) => {
+  const client = new Client();
+  await client.connect();
+  await highLowUpdate(client);
+};
+
 module.exports = {
   allTokenUpdateHandler,
   kdaPriceUpdateHandler,
   candleUpdateHandler,
   hourCandlesUpdateHandler,
+  highLowUpdateHandler,
 };
