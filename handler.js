@@ -20,8 +20,16 @@ const candleUpdateHandler = async (event) => {
   await candleUpdate(client);
 };
 
+const hourCandlesUpdate = require("./src/hourCandlesUpdate");
+const hourCandlesUpdateHandler = async (event) => {
+  const client = new Client();
+  await client.connect();
+  await hourCandlesUpdate(client);
+};
+
 module.exports = {
   allTokenUpdateHandler,
   kdaPriceUpdateHandler,
   candleUpdateHandler,
+  hourCandlesUpdateHandler,
 };
