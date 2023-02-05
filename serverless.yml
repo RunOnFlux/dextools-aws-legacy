@@ -46,6 +46,11 @@ functions:
       # Invoke Lambda function every minute
       - schedule: 
           rate: rate(1 minute)  
+  candleUpdateHandler:
+    handler: handler.candleUpdateHandler
+    events:
+      - schedule:
+          rate: rate(1 minute)
 
 package:
   patterns:

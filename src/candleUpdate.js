@@ -1,6 +1,6 @@
 const { DateTime } = require("luxon");
 const format = require("pg-format");
-const { getAllTokensFromDB, getKDAMap } = require("../helpers");
+const { getAllTokensFromDB, getKDAMap, getNearestKDAPrice } = require("../helpers");
 
 const getTransactionMap = async (
   client,
@@ -31,14 +31,8 @@ const getTransactionMap = async (
     const priceInKDA =
       from_token === "coin" ? fromAmount / toAmount : toAmount / fromAmount;
 
-    let finalPrice = priceInKDA;
-    let kdaMinute = date;
-    while (!(kdaMinute in kdaPriceMap)) {
-      kdaMinute = DateTime.fromJSDate(kdaMinute)
-        .minus({ minutes: 1 })
-        .toJSDate();
-    }
-    finalPrice = priceInKDA * kdaPriceMap[kdaMinute];
+    const kdaPrice = getNearestKDAPrice(kdaPriceMap, date);
+    const finalPrice = priceInKDA * kdaPrice;
     if (address in p) {
       const transactions = p[address];
       if (date in transactions) {

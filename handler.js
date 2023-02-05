@@ -10,12 +10,18 @@ const kdaPriceUpdate = require("./src/kdaPriceUpdate");
 const kdaPriceUpdateHandler = async (event) => {
   const client = new Client();
   await client.connect();
-  const s = await client.query("SELECT 1+1 AS sum");
-  console.log(s);
   await kdaPriceUpdate(client);
+};
+
+const candleUpdate = require("./src/candleUpdate");
+const candleUpdateHandler = async (event) => {
+  const client = new Client();
+  await client.connect();
+  await candleUpdate(client);
 };
 
 module.exports = {
   allTokenUpdateHandler,
-  kdaPriceUpdateHandler
+  kdaPriceUpdateHandler,
+  candleUpdateHandler,
 };
