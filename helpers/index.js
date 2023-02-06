@@ -114,7 +114,11 @@ const getAllTokensFromDB = async () => {
   const value = await ddbClient.send(new GetCommand(item));
   const { Item } = value;
   const { cachedValue } = Item;
-  return parse(cachedValue);
+  const tokens = parse(cachedValue);
+  return Object.keys(tokens).reduce((p,c) => {
+    p[c] = tokens[c].name
+    return p;
+  }, {});
 };
 
 const buildFirstCandle = async (

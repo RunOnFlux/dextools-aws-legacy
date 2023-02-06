@@ -1,7 +1,8 @@
 const { PutCommand, GetCommand } = require("@aws-sdk/lib-dynamodb");
 const { DynamoDBClient } = require("@aws-sdk/client-dynamodb");
 const { stringify } = require("zipson");
-const pairs = require("../tokens.json");
+const pairs = require("../pairs.json");
+const tokens = require("../token.json");
 
 const CACHE_TABLE = process.env.TOKENS_TABLE || false;
 const ddbClient = new DynamoDBClient({ region: "us-east-1" });
@@ -15,8 +16,8 @@ const getAllTokens = async () => {
     }
     const [address0, address1] = c.split(":");
     const { token0, token1 } = pairInfo;
-    p[address0] = token0;
-    p[address1] = token1;
+    p[address0] = tokens[token0];
+    p[address1] = tokens[token1];
     return p;
   }, {});
   delete tokenMap["coin"];
@@ -24,12 +25,12 @@ const getAllTokens = async () => {
 };
 
 const allTokenUpdate = async () => {
-  const tokens = await getAllTokens();
+  const allTokens = await getAllTokens();
   const item = {
     TableName: CACHE_TABLE,
     Item: {
       id: "TOKENS",
-      cachedValue: stringify(tokens, { fullPrecisionFloats: true }),
+      cachedValue: stringify(allTokens, { fullPrecisionFloats: true }),
     },
   };
   console.log("UPLOADING");
