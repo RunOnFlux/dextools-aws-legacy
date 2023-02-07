@@ -8,7 +8,7 @@ const mainClient = new Client();
 mainClient.connect();
 
 const selectQuery = `
- SELECT * FROM kaddex_transactions WHERE from_token = $1 OR to_token = $2 AND timestamp >= $3 AND timestamp < $4 ORDER BY timestamp ASC`;
+ SELECT * FROM transactions WHERE from_token = $1 OR to_token = $2 AND timestamp >= $3 AND timestamp < $4 ORDER BY timestamp ASC`;
 
 const END_DATE = DateTime.now().startOf("minute").minus({ minutes: 1 });
 
