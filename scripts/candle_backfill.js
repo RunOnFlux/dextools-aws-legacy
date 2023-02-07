@@ -8,7 +8,7 @@ const mainClient = new Client();
 mainClient.connect();
 
 const selectQuery = `
- SELECT * FROM transactions WHERE from_token = $1 OR to_token = $2 AND timestamp >= $3 AND timestamp < $4 ORDER BY timestamp ASC`;
+ SELECT * FROM kaddex_transactions WHERE from_token = $1 OR to_token = $2 AND timestamp >= $3 AND timestamp < $4 ORDER BY timestamp ASC`;
 
 const END_DATE = DateTime.now().startOf("minute").minus({ minutes: 1 });
 
@@ -40,8 +40,10 @@ const END_DATE = DateTime.now().startOf("minute").minus({ minutes: 1 });
         parseFloat(firstCandle.volume),
       ],
     ];
+
+    let startCandle = candles[0];
     while (start < END_DATE) {
-      const addedEnd = start.plus({ months: 1 });
+      const addedEnd = start.plus({ weeks: 1 });
       let end = addedEnd > END_DATE ? END_DATE : addedEnd;
       console.log(
         `Getting TX of ${token} for ${start.toJSDate()} to ${end.toJSDate()}`
@@ -90,11 +92,13 @@ const END_DATE = DateTime.now().startOf("minute").minus({ minutes: 1 });
 
         return p;
       }, {});
+
+      let tempCandles = [startCandle];
       while (start < end) {
-        const prevClose = candles[candles.length - 1][5];
+        const prevClose = tempCandles[tempCandles.length - 1][5];
         if (start.toJSDate() in transactionsMap) {
           const info = transactionsMap[start.toJSDate()];
-          candles.push([
+          tempCandles.push([
             tokenMap[token],
             start.toJSDate(),
             Math.min(info.low, prevClose),
@@ -104,7 +108,7 @@ const END_DATE = DateTime.now().startOf("minute").minus({ minutes: 1 });
             info.volume,
           ]);
         } else {
-          candles.push([
+          tempCandles.push([
             tokenMap[token],
             start.toJSDate(),
             prevClose,
@@ -117,21 +121,22 @@ const END_DATE = DateTime.now().startOf("minute").minus({ minutes: 1 });
 
         start = start.plus({ minutes: 1 });
       }
-    }
-    console.log(`Built ${candles.length} candles for ${token} `);
-    const insertedCandles = await mainClient.query(
-      format(
-        `INSERT INTO candles (ticker, timestamp, low, high, open, close, volume) VALUES %L 
-        ON CONFLICT ON CONSTRAINT candles_pkey
-        DO UPDATE 
-        SET (ticker, timestamp, low, high, open, close, volume) = (EXCLUDED.ticker, EXCLUDED.timestamp, EXCLUDED.low, EXCLUDED.high, EXCLUDED.open, EXCLUDED.close, EXCLUDED.volume);`,
-        candles
-      )
-    );
+      console.log(`Built ${tempCandles.length} candles for ${token} `);
+      const insertedCandles = await mainClient.query(
+        format(
+          `INSERT INTO candles (ticker, timestamp, low, high, open, close, volume) VALUES %L 
+          ON CONFLICT ON CONSTRAINT candles_pkey
+          DO UPDATE 
+          SET (ticker, timestamp, low, high, open, close, volume) = (EXCLUDED.ticker, EXCLUDED.timestamp, EXCLUDED.low, EXCLUDED.high, EXCLUDED.open, EXCLUDED.close, EXCLUDED.volume);`,
+          tempCandles
+        )
+      );
+      console.log(
+        `Inserted ${insertedCandles.rowCount} candles for token ${token}`
+      );
 
-    console.log(
-      `Inserted ${insertedCandles.rowCount} candles for token ${token}`
-    );
+      startCandle = tempCandles[tempCandles.length-1];
+    }
   }
   console.log("Done");
   process.exit();
