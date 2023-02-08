@@ -36,8 +36,4 @@ const allTokenUpdate = async () => {
   await ddbClient.send(new PutCommand(item));
 };
 
-(async () => {
-  await allTokenUpdate();
-})();
-
 module.exports = allTokenUpdate;
