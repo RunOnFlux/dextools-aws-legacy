@@ -121,6 +121,7 @@ const addTokenInfo = async (tokenMap) => {
     const tokens = Object.keys(tokenMap).reduce((p,c) => {
       const token = tokenMap[c];
       if(!(token.symbol in tokenWithInfos)) {
+        p[c] = token;
         return p;
       }
       p[c] = {

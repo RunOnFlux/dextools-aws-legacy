@@ -10,21 +10,21 @@ const ddbClient = new DynamoDBClient({ region: "us-east-1" });
 const getAllTokens = async () => {
   const allTokens = pairs.reduce((p,c) => {
     const {token1, token2} = c;
-    if(!(token1.code in p)) {
+    if(!(token1.code in p) && token1.isVerified) {
       p[token1.code] = token1;
     }
-    if(!(token2.code in p)) {
+    if(!(token2.code in p) && token2.isVerified) {
       p[token2.code] = token2;
     }
     return p;
   }, {})
+  delete allTokens.coin
   return allTokens;
 };
 
 const allTokenUpdate = async () => {
   const allTokens = await getAllTokens();
   const finalTokens = await addTokenInfo(allTokens);
-  console.log(finalTokens)
   const item = {
     TableName: CACHE_TABLE,
     Item: {
