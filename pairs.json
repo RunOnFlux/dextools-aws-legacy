@@ -136,23 +136,6 @@
     }
   },
   {
-    "code": "coin:free.wiza",
-    "token1": {
-      "code": "coin",
-      "logoUrl": "https://swap.kaddex.com/images/crypto/kda-crypto.svg",
-      "name": "Kadena Coin",
-      "symbol": "KDA",
-      "isVerified": true
-    },
-    "token2": {
-      "code": "free.wiza",
-      "logoUrl": null,
-      "name": null,
-      "symbol": null,
-      "isVerified": false
-    }
-  },
-  {
     "code": "coin:hypercent.prod-hype-coin",
     "token1": {
       "code": "coin",
