@@ -34,23 +34,6 @@
     }
   },
   {
-    "code": "coin:free.babena",
-    "token1": {
-      "code": "coin",
-      "logoUrl": "https://swap.kaddex.com/images/crypto/kda-crypto.svg",
-      "name": "Kadena Coin",
-      "symbol": "KDA",
-      "isVerified": true
-    },
-    "token2": {
-      "code": "free.babena",
-      "logoUrl": null,
-      "name": null,
-      "symbol": null,
-      "isVerified": false
-    }
-  },
-  {
     "code": "coin:free.backalley",
     "token1": {
       "code": "coin",
