@@ -94,7 +94,7 @@ const candleUpdate = async (client) => {
     const ticker = tokenMap[token];
     console.log(`Processing for ${ticker}`);
     let start = startMinute;
-    const transactions = transactionMap[token.address];
+    const transactions = transactionMap[token];
     let candles = [];
     while (start <= endMinute) {
       let prevClose;

@@ -10,10 +10,10 @@ const ddbClient = new DynamoDBClient({ region: "us-east-1" });
 const getAllTokens = async () => {
   const allTokens = pairs.reduce((p,c) => {
     const {token1, token2} = c;
-    if(!(token1.code in p) && token1.isVerified) {
+    if(!(token1.code in p)) {
       p[token1.code] = token1;
     }
-    if(!(token2.code in p) && token2.isVerified) {
+    if(!(token2.code in p)) {
       p[token2.code] = token2;
     }
     return p;
