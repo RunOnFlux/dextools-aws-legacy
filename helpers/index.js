@@ -122,6 +122,7 @@ const getAllTokensFromDB = async () => {
     p[c] = tokens[c].symbol
     return p;
   }, {});
+  return s;
 };
 
 const buildFirstCandle = async (
