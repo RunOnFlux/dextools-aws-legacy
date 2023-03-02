@@ -72,7 +72,7 @@ const getWIZACS = async () => {
 };
 
 const getCirculatingSupply = async () => {
-  const [kdl, kds, kdx, flux, wiza] = await Promise.all([
+  const [kdl, kds, kdx, flux, wiza] = await Promise.allSettled([
     getKDSwapCS("kdlaunch.token"),
     getKDSwapCS("kdlaunch.kdswap-token"),
     getKDXCS(),
@@ -81,11 +81,11 @@ const getCirculatingSupply = async () => {
   ]);
 
   const circulatingSupply = {
-    KDL: kdl,
-    KDS: kds,
-    KDX: kdx,
-    FLUX: flux,
-    WIZA: wiza,
+    KDL: kdl.status === "fulfilled" ? kdl.value : null,
+    KDS: kds.status === "fulfilled" ? kds.value : null,
+    KDX: kdx.status === "fulfilled" ? kdx.value : null,
+    FLUX: flux.status === "fulfilled" ? flux.value : null,
+    WIZA: wiza.status === "fulfilled" ? wiza.value : null,
     KISHK: -1,
   };
 
@@ -93,10 +93,10 @@ const getCirculatingSupply = async () => {
 };
 
 const getTotalReductions = async () => {
-  const [KDX, KISHK] = await Promise.all([getKDXBurns(), getKISHKBurns()]);
+  const [KDX, KISHK] = await Promise.allSettled([getKDXBurns(), getKISHKBurns()]);
   return {
-    KDX,
-    KISHK,
+    KDX: KDX.status === "fulfilled" ? KDX.value : null, 
+    KISHK: KISHK.status === "fulfilled" ? KISHK.value : null,
   };
 };
 
