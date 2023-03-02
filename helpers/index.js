@@ -116,7 +116,7 @@ const getAllTokensFromDB = async () => {
   const { cachedValue } = Item;
   const tokens = parse(cachedValue);
   const s = Object.keys(tokens).reduce((p,c) => {
-    if(!c || !tokens[c]) {
+    if(!c || !tokens[c] || !tokens[c].symbol) {
       return p;
     }
     p[c] = tokens[c].symbol
