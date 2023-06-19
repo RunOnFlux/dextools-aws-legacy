@@ -68,6 +68,7 @@ functions:
     events:
       - schedule:
           rate: rate(30 minutes)
+          enabled: false
 
 package:
   patterns:
