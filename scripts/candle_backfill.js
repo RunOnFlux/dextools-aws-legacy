@@ -1,7 +1,12 @@
 const { DateTime } = require("luxon");
 const { Client } = require("pg");
 const format = require("pg-format");
-const { getKDAMap, getNearestKDAPrice, getAllTokensFromDB, getCandleOrBuild } = require("../helpers");
+const {
+  getKDAMap,
+  getNearestKDAPrice,
+  getAllTokensFromDB,
+  getCandleOrBuild,
+} = require("../helpers");
 require("dotenv").config();
 
 const mainClient = new Client();
@@ -22,7 +27,13 @@ const END_DATE = DateTime.now().startOf("minute").minus({ minutes: 1 });
 
   for (let token of tokens) {
     console.log(`Processing ${token}`);
-    const firstCandle = await getCandleOrBuild(mainClient, kdaPriceMap, tokenMap[token], token, 'ASC');
+    const firstCandle = await getCandleOrBuild(
+      mainClient,
+      kdaPriceMap,
+      tokenMap[token],
+      token,
+      "ASC"
+    );
     let firstCandleDate = DateTime.fromJSDate(firstCandle.timestamp, {
       zone: "utc",
     })
@@ -124,8 +135,8 @@ const END_DATE = DateTime.now().startOf("minute").minus({ minutes: 1 });
       console.log(`Built ${tempCandles.length} candles for ${token} `);
       const insertedCandles = await mainClient.query(
         format(
-          `INSERT INTO candles (ticker, timestamp, low, high, open, close, volume) VALUES %L 
-          ON CONFLICT ON CONSTRAINT candles_pkey
+          `INSERT INTO candle_master (ticker, timestamp, low, high, open, close, volume) VALUES %L 
+          ON CONFLICT ON CONSTRAINT candle_master_pkey
           DO UPDATE 
           SET (ticker, timestamp, low, high, open, close, volume) = (EXCLUDED.ticker, EXCLUDED.timestamp, EXCLUDED.low, EXCLUDED.high, EXCLUDED.open, EXCLUDED.close, EXCLUDED.volume);`,
           tempCandles
@@ -135,7 +146,7 @@ const END_DATE = DateTime.now().startOf("minute").minus({ minutes: 1 });
         `Inserted ${insertedCandles.rowCount} candles for token ${token}`
       );
 
-      startCandle = tempCandles[tempCandles.length-1];
+      startCandle = tempCandles[tempCandles.length - 1];
     }
   }
   console.log("Done");

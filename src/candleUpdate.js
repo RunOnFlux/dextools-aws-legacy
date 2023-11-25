@@ -1,6 +1,10 @@
 const { DateTime } = require("luxon");
 const format = require("pg-format");
-const { getAllTokensFromDB, getKDAMap, getNearestKDAPrice } = require("../helpers");
+const {
+  getAllTokensFromDB,
+  getKDAMap,
+  getNearestKDAPrice,
+} = require("../helpers");
 
 const getTransactionMap = async (
   client,
@@ -78,7 +82,7 @@ const candleUpdate = async (client) => {
 
   // GET KDA Price
   console.log(`get kda prices`);
-  const kdaPriceMap = await getKDAMap(client)
+  const kdaPriceMap = await getKDAMap(client);
   console.log(`built kda price map`);
 
   // GET All transactions within the minute
@@ -133,19 +137,15 @@ const candleUpdate = async (client) => {
       start = start.plus({ minutes: 1 });
     }
 
-    console.log(
-      `built ${candles.length} candles for ${ticker}`
-    );
+    console.log(`built ${candles.length} candles for ${ticker}`);
     const insertQuery = `
-      INSERT INTO candles (ticker, timestamp, low, high, open, close, volume) 
+      INSERT INTO candle_master (ticker, timestamp, low, high, open, close, volume) 
       VALUES %L 
-      ON CONFLICT ON CONSTRAINT candles_pkey
+      ON CONFLICT ON CONSTRAINT candle_master_pkey
       DO UPDATE SET (ticker, timestamp, low, high, open, close, volume) = (EXCLUDED.ticker, EXCLUDED.timestamp, EXCLUDED.low, EXCLUDED.high, EXCLUDED.open, EXCLUDED.close, EXCLUDED.volume);
     `;
     const s = await client.query(format(insertQuery, candles));
-    console.log(
-      `inserted ${s.rowCount} candles for ${ticker}`
-    );
+    console.log(`inserted ${s.rowCount} candles for ${ticker}`);
   }
 };
 

@@ -115,22 +115,17 @@ const getAllTokensFromDB = async () => {
   const { Item } = value;
   const { cachedValue } = Item;
   const tokens = parse(cachedValue);
-  const s = Object.keys(tokens).reduce((p,c) => {
-    if(!c || !tokens[c] || !tokens[c].symbol) {
+  const s = Object.keys(tokens).reduce((p, c) => {
+    if (!c || !tokens[c] || !tokens[c].symbol) {
       return p;
     }
-    p[c] = tokens[c].symbol
+    p[c] = tokens[c].symbol;
     return p;
   }, {});
   return s;
 };
 
-const buildFirstCandle = async (
-  client,
-  kdaPriceMap,
-  ticker,
-  tokenAddress
-) => {
+const buildFirstCandle = async (client, kdaPriceMap, ticker, tokenAddress) => {
   const firstTXN = await client.query(
     `SELECT * FROM transactions WHERE from_token=$1 OR to_token=$2 ORDER BY timestamp asc LIMIT 1`,
     [tokenAddress, tokenAddress]
@@ -156,17 +151,29 @@ const buildFirstCandle = async (
     parseFloat(volume),
   ];
   await client.query(
-    `INSERT INTO candles (ticker, timestamp, low, high, open, close, volume) VALUES ($1,$2,$3,$4,$5,$6,$7) ON CONFLICT ON CONSTRAINT candles_pkey DO NOTHING`,
+    `INSERT INTO candle_master (ticker, timestamp, low, high, open, close, volume) VALUES ($1,$2,$3,$4,$5,$6,$7) ON CONFLICT ON CONSTRAINT candle_master_pkey DO NOTHING`,
     candle
   );
 };
 
-const getCandleOrBuild = async (client, kdaPriceMap, ticker, tokenAddress, order) => {
-  const hasCandle = await client.query('SELECT * FROM candles WHERE ticker=$1 ORDER BY timestamp LIMIT 1', [ticker]);
-  if(hasCandle.rowCount === 0) {
+const getCandleOrBuild = async (
+  client,
+  kdaPriceMap,
+  ticker,
+  tokenAddress,
+  order
+) => {
+  const hasCandle = await client.query(
+    "SELECT * FROM candles WHERE ticker=$1 ORDER BY timestamp LIMIT 1",
+    [ticker]
+  );
+  if (hasCandle.rowCount === 0) {
     await buildFirstCandle(client, kdaPriceMap, ticker, tokenAddress);
   }
-  const candle = await client.query(`SELECT * FROM candles WHERE ticker=$1 ORDER BY timestamp ${order} LIMIT 1`, [ticker]);
+  const candle = await client.query(
+    `SELECT * FROM candles WHERE ticker=$1 ORDER BY timestamp ${order} LIMIT 1`,
+    [ticker]
+  );
   return candle.rows[0];
 };
 
