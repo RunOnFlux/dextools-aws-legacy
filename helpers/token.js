@@ -4,7 +4,7 @@ const { DateTime } = require("luxon");
 const { makePactCall } = require("./pact");
 
 const { stringify } = require("zipson/lib");
-const tokenInfos = require("../tokenInfo.json")
+const tokenInfos = require("../tokenInfo.json");
 
 const CDN_PATH = "https://cdn2.kadefi.money";
 
@@ -26,10 +26,7 @@ const getKDSwapCS = async (token) => {
 };
 
 const getKISHKBurns = async () => {
-  const dataR = await axios.get(
-    "https://data.kadefi.money/balance/free.kishu-ken_token-table/k:0000000000000000000000000000000000000000000000000000000000000000"
-  );
-  return dataR.data.balance;
+  return 310511793553995;
 };
 
 const getKDXBurns = async () => {
@@ -93,9 +90,12 @@ const getCirculatingSupply = async () => {
 };
 
 const getTotalReductions = async () => {
-  const [KDX, KISHK] = await Promise.allSettled([getKDXBurns(), getKISHKBurns()]);
+  const [KDX, KISHK] = await Promise.allSettled([
+    getKDXBurns(),
+    getKISHKBurns(),
+  ]);
   return {
-    KDX: KDX.status === "fulfilled" ? KDX.value : null, 
+    KDX: KDX.status === "fulfilled" ? KDX.value : null,
     KISHK: KISHK.status === "fulfilled" ? KISHK.value : null,
   };
 };
@@ -108,26 +108,32 @@ const addTokenInfo = async (tokenMap) => {
       getTotalReductions(),
     ]);
 
-    const tokenWithInfos = Object.keys(tokenInfos).reduce((p,c) => {
+    const tokenWithInfos = Object.keys(tokenInfos).reduce((p, c) => {
       const tokenInfo = tokenInfos[c];
-      const totalSupply = red[c] ? tokenInfo.totalSupply - red[c] : tokenInfo.totalSupply;
-      const circulatingSupply = cs[c] === -1 ? totalSupply : cs[c] ? cs[c] : null;
+      const totalSupply = red[c]
+        ? tokenInfo.totalSupply - red[c]
+        : tokenInfo.totalSupply;
+      const circulatingSupply =
+        cs[c] === -1 ? totalSupply : cs[c] ? cs[c] : null;
       const tempToken = Object.assign({}, tokenInfo);
-      const tokenWithCorrectTs = Object.assign(tempToken, { totalSupply, circulatingSupply });
+      const tokenWithCorrectTs = Object.assign(tempToken, {
+        totalSupply,
+        circulatingSupply,
+      });
       p[c] = tokenWithCorrectTs;
       return p;
-    }, {})
+    }, {});
 
-    const tokens = Object.keys(tokenMap).reduce((p,c) => {
+    const tokens = Object.keys(tokenMap).reduce((p, c) => {
       const token = tokenMap[c];
-      if(!(token.symbol in tokenWithInfos)) {
+      if (!(token.symbol in tokenWithInfos)) {
         p[c] = token;
         return p;
       }
       p[c] = {
         ...token,
-        ...tokenWithInfos[token.symbol]
-      }
+        ...tokenWithInfos[token.symbol],
+      };
       return p;
     }, {});
 
@@ -138,5 +144,5 @@ const addTokenInfo = async (tokenMap) => {
 };
 
 module.exports = {
-  addTokenInfo
+  addTokenInfo,
 };

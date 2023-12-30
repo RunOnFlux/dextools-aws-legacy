@@ -13,7 +13,6 @@ const creationTime = () => Math.round(new Date().getTime() / 1000) - 10;
 const TTL = 1000000;
 
 const CHAINWEB_HOSTS = [
-  `https://kmdsapactapi_31351.app.runonflux.io`,
   "https://kadena2.app.runonflux.io",
   "https://api.chainweb.com",
 ];
