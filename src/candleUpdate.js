@@ -107,7 +107,11 @@ const candleUpdate = async (client) => {
           `SELECT close FROM candle_master WHERE ticker = $1 AND timestamp < $2 ORDER BY timestamp DESC LIMIT 1`,
           [ticker, startMinute.toJSDate()]
         );
-        prevClose = parseFloat(prevCloseR.rows[0].close);
+        if(prevCloseR.rows.length === 0 || !prevCloseR.rows[0]) {
+          prevClose = 0
+        } else {
+          prevClose = parseFloat(prevCloseR.rows[0].close);
+        }
       } else {
         prevClose = candles[candles.length - 1][5];
       }
