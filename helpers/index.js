@@ -176,6 +176,9 @@ const getCandleOrBuild = async (
   return candle.rows[0];
 };
 
+const sleep = async (ms) =>
+  await new Promise((resolve) => setTimeout(resolve, ms));
+
 module.exports = {
   makePactCall,
   getReserve,
@@ -184,4 +187,8 @@ module.exports = {
   getNearestKDAPrice,
   getAllTokensFromDB,
   getCandleOrBuild,
+  sleep,
+  constants: {
+    MAX_CHAIN_ID,
+  },
 };
