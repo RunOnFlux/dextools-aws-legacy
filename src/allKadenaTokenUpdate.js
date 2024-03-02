@@ -1,19 +1,19 @@
-const { PutCommand, GetCommand } = require("@aws-sdk/lib-dynamodb");
-const { DynamoDBClient } = require("@aws-sdk/client-dynamodb");
-const { stringify, parse } = require("zipson");
-const { makePactCall } = require("../helpers/pact");
+const { PutCommand, GetCommand } = require('@aws-sdk/lib-dynamodb');
+const { DynamoDBClient } = require('@aws-sdk/client-dynamodb');
+const { stringify, parse } = require('zipson');
+const { makePactCall, isValidToken } = require('../helpers/pact');
 const {
   sleep,
   constants: { MAX_CHAIN_ID },
-} = require("../helpers");
+} = require('../helpers');
 
-const CACHE_TABLE = process.env.KADENA_TOKENS_TABLE || "kadena-tokens-table";
+const CACHE_TABLE = process.env.KADENA_TOKENS_TABLE || 'kadena-tokens-table';
 const ddbClient = new DynamoDBClient({
-  region: "us-east-1",
+  region: 'us-east-1',
   endpoint: process.env.AWS_ENDPOINT || undefined,
 });
 
-const getAllKadenaTokens = async () => {
+const updateKadenaTokens = async (chainId) => {
   const pactCode = `(let
     ((all-tokens
        (lambda (contract:object)
@@ -29,34 +29,26 @@ const getAllKadenaTokens = async () => {
     )
     (filter (!= "") (map (all-tokens) (map (describe-module) (list-modules))))
   )`;
-  const validChainModules = {};
-  const invalidChainModules = {};
-  for (let chainId = 0; chainId < MAX_CHAIN_ID; chainId++) {
-    const validChainTokens = [];
-    const invalidChainTokens = [];
-    try {
-      const res = await makePactCall(chainId.toString(), pactCode);
-      if (res?.result?.data?.length > 0) {
-        console.log(
-          `[CHAIN ${chainId}] FOUND ${res?.result?.data?.length} tokens`
-        );
+  const invalidChainTokens = [];
+  try {
+    const res = await makePactCall(chainId.toString(), pactCode);
+    if (res?.result?.data?.length > 0) {
+      console.log(`[CHAIN ${chainId}] FOUND ${res?.result?.data?.length} tokens`);
+      const storedTokens = await getStoredKadenaTokensByChain(chainId);
+      console.log(`[CHAIN ${chainId}] ${storedTokens?.length} tokens already saved`);
+      const difference = res?.result?.data?.filter((t) => !storedTokens.includes(t));
+      if (difference.length) {
+        console.log(`[CHAIN ${chainId}] FOUNDED ${difference.length} new tokens: ${difference.join(', ')}`);
+        const validChainTokens = storedTokens;
         let tokenCount = 1;
-        for (const token of res?.result?.data) {
+        for (const token of difference) {
           try {
-            const isTokenWorking = await makePactCall(
-              chainId.toString(),
-              `(${token}.get-balance "k:alice")`
-            );
+            const isTokenWorking = await makePactCall(chainId.toString(), `(${token}.get-balance "k:alice")`);
             await sleep(500);
-            if (
-              isTokenWorking?.result?.status === "success" ||
-              isTokenWorking?.result?.error?.message?.includes("row not found")
-            ) {
+            if (isTokenWorking?.result?.status === 'success' || isTokenWorking?.result?.error?.message?.includes('row not found')) {
               validChainTokens.push(token);
             } else {
-              console.error(
-                `[CHAIN ${chainId}] TOKEN ${tokenCount}/${res?.result?.data?.length} ${token} IS NOT VALID`
-              );
+              console.error(`[CHAIN ${chainId}] TOKEN ${token} IS NOT VALID`);
               invalidChainTokens.push(token);
             }
           } catch (err) {
@@ -65,48 +57,40 @@ const getAllKadenaTokens = async () => {
 
           tokenCount += 1;
         }
-        console.log(
-          `[CHAIN ${chainId}] valid TOKENS: ${validChainTokens.length}/${res?.result?.data?.length}`
-        );
-        validChainModules[chainId] = validChainTokens;
-        invalidChainModules[chainId] = invalidChainTokens;
-      } else {
-        console.error(`ERROR on chain ${chainId} `, res);
-      }
-    } catch (err) {
-      console.error(`ERROR on chain ${chainId} `);
-      console.log(err);
-      const alreadyExists = await ddbClient.send(
-        new GetCommand({
+        console.log(`[CHAIN ${chainId}] invalid TOKENS: ${invalidChainTokens.length}/${res?.result?.data?.length}`);
+        const item = {
           TableName: CACHE_TABLE,
-          Key: { chainId: chainId.toString() },
-        })
-      );
-      const tokens = parse(alreadyExists?.Item?.tokens || "[]");
-      validChainModules[chainId] = tokens;
+          Item: {
+            chainId: chainId.toString(),
+            tokens: stringify(validChainTokens),
+            lastUpdate: new Date().toISOString(),
+          },
+        };
+        console.log('UPLOADING TOKENS ON CHAIN ' + chainId);
+        await ddbClient.send(new PutCommand(item));
+      }
+    } else {
+      console.error(`NO TOKENS FOUNDED ON CHAIN ${chainId} `, res);
     }
-
-    await sleep(1000);
+  } catch (err) {
+    console.error(`ERROR FETCHING TOKENS ON CHAIN ${chainId}`);
+    console.log(err);
   }
+};
 
-  console.log(`validModules:`, validChainModules);
-  console.log(`invalidModules:`, invalidChainModules);
-  return validChainModules;
+const getStoredKadenaTokensByChain = async (chainId) => {
+  const res = await ddbClient.send(
+    new GetCommand({
+      TableName: CACHE_TABLE,
+      Key: { chainId: chainId.toString() },
+    })
+  );
+  return res?.Item?.tokens ? parse(res?.Item?.tokens) : [];
 };
 
 const allKadenaTokenUpdate = async () => {
-  const allTokens = await getAllKadenaTokens();
-  for (const chainId of Object.keys(allTokens)) {
-    const item = {
-      TableName: CACHE_TABLE,
-      Item: {
-        chainId,
-        tokens: stringify(allTokens[chainId]),
-        lastUpdate: new Date().toISOString(),
-      },
-    };
-    console.log("UPLOADING TOKENS ON CHAIN " + chainId);
-    await ddbClient.send(new PutCommand(item));
+  for (let chainId = 0; chainId < MAX_CHAIN_ID; chainId++) {
+    await updateKadenaTokens(chainId);
   }
 };
 
