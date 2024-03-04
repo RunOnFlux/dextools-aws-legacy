@@ -1,7 +1,6 @@
 const Pact = require('pact-lang-api');
 
 const GAS_PRICE = 0.00000001;
-const MAX_CHAIN_ID = 20;
 const creationTime = () => Math.round(new Date().getTime() / 1000) - 10;
 const TTL = 1000000;
 

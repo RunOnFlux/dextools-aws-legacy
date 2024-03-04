@@ -4,7 +4,7 @@ const { stringify, parse } = require('zipson');
 const { makePactCall, isValidToken } = require('../helpers/pact');
 const {
   sleep,
-  constants: { MAX_CHAIN_ID },
+  constants: { KADENA_CHAINS_COUNT },
 } = require('../helpers');
 
 const CACHE_TABLE = process.env.KADENA_TOKENS_TABLE || 'kadena-tokens-table';
@@ -89,19 +89,14 @@ const getStoredKadenaTokensByChain = async (chainId) => {
 };
 
 const allKadenaTokenUpdate = async () => {
-  for (let chainId = 0; chainId < MAX_CHAIN_ID; chainId++) {
+  for (let chainId = 0; chainId < KADENA_CHAINS_COUNT; chainId++) {
     await updateKadenaTokens(chainId);
   }
 };
 
-module.exports = allKadenaTokenUpdate;
+module.exports = { allKadenaTokenUpdate, getStoredKadenaTokensByChain };
 
 /**
- aws dynamodb create-table 
-    --table-name kadena-tokens-table 
-    --attribute-definitions AttributeName=chainId,AttributeType=S 
-    --key-schema AttributeName=chainId,KeyType=HASH 
-    --provisioned-throughput ReadCapacityUnits=1,WriteCapacityUnits=1 
-    --endpoint-url http://localhost:8000
+ aws dynamodb create-table --table-name kadena-tokens-table --attribute-definitions AttributeName=chainId,AttributeType=S --key-schema AttributeName=chainId,KeyType=HASH --provisioned-throughput ReadCapacityUnits=1,WriteCapacityUnits=1 --endpoint-url http://localhost:8000
 
  */

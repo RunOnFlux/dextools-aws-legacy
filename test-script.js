@@ -1,4 +1,5 @@
-require("dotenv").config();
+require('dotenv').config();
 
-const allKadenaTokenUpdate = require("./src/allKadenaTokenUpdate");
-allKadenaTokenUpdate();
+const { allKadenaTokenUpdate } = require('./src/allKadenaTokenUpdate');
+const updateAccountsBalance = require('./src/accountsBalanceUpdate');
+updateAccountsBalance();
