@@ -1,7 +1,7 @@
 const { PutCommand, GetCommand } = require('@aws-sdk/lib-dynamodb');
 const { DynamoDBClient } = require('@aws-sdk/client-dynamodb');
 const { stringify, parse } = require('zipson');
-const { makePactCall, isValidToken } = require('../helpers/pact');
+const { makePactCall } = require('../helpers/pact');
 const {
   sleep,
   constants: { KADENA_CHAINS_COUNT },
