@@ -129,6 +129,7 @@ const updateAccountsBalance = async () => {
           Item: {
             account,
             date: new Date().toISOString().split('T')[0],
+            totalUsdValue: dataToPersist[account].reduce((total, current) => total + current.usdValue, 0),
             balances: stringify(dataToPersist[account]),
           },
         };
