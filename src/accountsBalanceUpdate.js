@@ -12,7 +12,7 @@ const { parse, stringify } = require('zipson/lib');
 const mainClient = new Client();
 mainClient.connect();
 
-const ACCOUNTS_CHUNK_SIZE = 20;
+const ACCOUNTS_CHUNK_SIZE = 10;
 
 const KADENA_ACCOUNTS_TABLE = process.env.KADENA_ACCOUNTS_TABLE || 'kadena-accounts';
 const KADENA_ACCOUNTS_BALANCE_TABLE = process.env.KADENA_ACCOUNTS_BALANCE_TABLE || 'kadena-accounts-balance';
