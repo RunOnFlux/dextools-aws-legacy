@@ -27,7 +27,7 @@ provider:
         - dynamodb:Scan
         - dynamodb:GetItem
         - dynamodb:PutItem
-      Resource: "*"
+      Resource: '*'
     - Effect: Allow
       Action:
         - rds-db:connect
@@ -37,15 +37,13 @@ functions:
   allTokenUpdateHandler:
     handler: handler.allTokenUpdateHandler
     events:
-      # Invoke Lambda function every minute
-      - schedule: 
-          rate: rate(5 minutes)  
+      - schedule:
+          rate: rate(5 minutes)
   kdaPriceUpdateHandler:
     handler: handler.kdaPriceUpdateHandler
     events:
-      # Invoke Lambda function every minute
-      - schedule: 
-          rate: rate(1 minute)  
+      - schedule:
+          rate: rate(1 minute)
   candleUpdateHandler:
     handler: handler.candleUpdateHandler
     events:
@@ -69,6 +67,16 @@ functions:
       - schedule:
           rate: rate(30 minutes)
           enabled: false
+  allKadenaTokenUpdateHandler:
+    handler: handler.allKadenaTokenUpdateHandler
+    events:
+      - schedule:
+          rate: cron(0 12 * * ? *)
+  updateAccountsBalanceHandler:
+    handler: handler.updateAccountsBalanceHandler
+    events:
+      - schedule:
+          rate: cron(0 1 * * ? *)
 
 package:
   patterns:
