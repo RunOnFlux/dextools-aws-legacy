@@ -10,7 +10,7 @@ const ddbClient = new DynamoDBClient({ region: 'us-east-1', endpoint: process.en
 
 const getAllTokens = async () => {
   // TODO: dismiss analytics-api.kaddex.com
-  const tokensR = await axios.get('https://analytics-api.kaddex.com/token-data/pairs');
+  const tokensR = await axios.get('https://api.ecko.finance/token-data/pairs');
   const allTokens = tokensR.data.reduce((p, c) => {
     const { token1, token2 } = c;
     if (!(token1.code in p)) {
