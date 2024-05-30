@@ -12,7 +12,7 @@ const { parse, stringify } = require('zipson/lib');
 const mainClient = new Client();
 mainClient.connect();
 
-const ACCOUNTS_CHUNK_SIZE = 10;
+const ACCOUNTS_CHUNK_SIZE = 5;
 
 const KADENA_ACCOUNTS_TABLE = process.env.KADENA_ACCOUNTS_TABLE || 'kadena-accounts';
 const KADENA_ACCOUNTS_BALANCE_TABLE = process.env.KADENA_ACCOUNTS_BALANCE_TABLE || 'kadena-accounts-balance';
@@ -41,14 +41,17 @@ const getAllTickerLastPrices = async () => {
 };
 
 const updateAccountsBalance = async () => {
+  console.log('Starting accounts balance update');
   let lastEvaluatedKey = undefined;
   let accountsResponse = [];
   const lastTokenPrices = await getAllTickerLastPrices();
+  console.log('Token prices fetched');
   const storedTokens = await ddbClient.send(
     new ScanCommand({
       TableName: process.env.TOKENS_TABLE,
     })
   );
+  console.log('Tokens fetched');
   const tokensData = parse(storedTokens?.Items[0]?.cachedValue);
   const getTokenSymbolByModuleName = (module) => (module === 'coin' ? 'KDA' : tokensData[module]?.symbol ?? null);
   const getTokenPriceByModuleName = (module) => lastTokenPrices.find((token) => token.ticker === getTokenSymbolByModuleName(module))?.close ?? 0;
@@ -69,6 +72,7 @@ const updateAccountsBalance = async () => {
       }, {});
       for (let chainId = 0; chainId < KADENA_CHAINS_COUNT; chainId++) {
         const tokens = await getStoredKadenaTokensByChain(chainId);
+        console.log(`[CHAIN ${chainId}] ${tokens?.length} tokens fetched`);
         const getTokenAlias = (tokenName) => tokenName.replace(/\./g, '');
         const pactCode = `
             (
@@ -90,8 +94,9 @@ const updateAccountsBalance = async () => {
                     )}}
             )`;
         try {
+          console.log('Sending request to chain', chainId);
           const res = await makePactCall(chainId.toString(), pactCode);
-          console.log(`CHAIN ${chainId}`);
+          console.log(`Request closed on CHAIN ${chainId} with status ${res?.result?.status ?? '?'}`);
           if (res?.result?.status === 'success') {
             Object.keys(res?.result?.data).forEach((accountString) => {
               if (dataToPersist[accountString]) {
