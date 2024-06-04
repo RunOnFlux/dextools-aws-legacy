@@ -12,7 +12,7 @@ const { parse, stringify } = require('zipson/lib');
 const mainClient = new Client();
 mainClient.connect();
 
-const ACCOUNTS_CHUNK_SIZE = 5;
+const ACCOUNTS_CHUNK_SIZE = 3;
 
 const KADENA_ACCOUNTS_TABLE = process.env.KADENA_ACCOUNTS_TABLE || 'kadena-accounts';
 const KADENA_ACCOUNTS_BALANCE_TABLE = process.env.KADENA_ACCOUNTS_BALANCE_TABLE || 'kadena-accounts-balance';
@@ -55,6 +55,7 @@ const updateAccountsBalance = async () => {
   const tokensData = parse(storedTokens?.Items[0]?.cachedValue);
   const getTokenSymbolByModuleName = (module) => (module === 'coin' ? 'KDA' : tokensData[module]?.symbol ?? null);
   const getTokenPriceByModuleName = (module) => lastTokenPrices.find((token) => token.ticker === getTokenSymbolByModuleName(module))?.close ?? 0;
+  // console.time('updateAccountsBalance');
   do {
     accountsResponse = await ddbClient.send(
       new ScanCommand({
@@ -65,14 +66,16 @@ const updateAccountsBalance = async () => {
     );
     lastEvaluatedKey = accountsResponse.LastEvaluatedKey;
     const accounts = accountsResponse.Items.map((item) => item.account);
+
     if (accounts.length) {
       const dataToPersist = accounts.reduce((acc, key) => {
         acc[key] = [];
         return acc;
       }, {});
-      for (let chainId = 0; chainId < KADENA_CHAINS_COUNT; chainId++) {
+
+      const chainPromises = Array.from({ length: KADENA_CHAINS_COUNT }, async (_, chainId) => {
         const tokens = await getStoredKadenaTokensByChain(chainId);
-        console.log(`[CHAIN ${chainId}] ${tokens?.length} tokens fetched`);
+        // console.log(`[CHAIN ${chainId}] ${tokens?.length} tokens fetched`);
         const getTokenAlias = (tokenName) => tokenName.replace(/\./g, '');
         const pactCode = `
             (
@@ -85,18 +88,21 @@ const updateAccountsBalance = async () => {
                       .join('\n')}
                   )
                    
-                    {${accounts.map(
-                      (acc, j) => `
+                    {${accounts
+                      .map(
+                        (acc, j) => `
                       "${acc}": {
-                        ${tokens?.map((ft) => `"${ft}": ${getTokenAlias(ft)}_${j}`)}
+                        ${tokens?.map((ft) => `"${ft}": ${getTokenAlias(ft)}_${j}`).join(', ')}
                       }
                       `
-                    )}}
+                      )
+                      .join(', ')}}
             )`;
+
         try {
-          console.log('Sending request to chain', chainId);
+          // console.log('Sending request to chain', chainId);
           const res = await makePactCall(chainId.toString(), pactCode);
-          console.log(`Request closed on CHAIN ${chainId} with status ${res?.result?.status ?? '?'}`);
+          // console.log(`Request closed on CHAIN ${chainId} with status ${res?.result?.status ?? '?'}`);
           if (res?.result?.status === 'success') {
             Object.keys(res?.result?.data).forEach((accountString) => {
               if (dataToPersist[accountString]) {
@@ -121,14 +127,16 @@ const updateAccountsBalance = async () => {
           } else {
             console.error(res?.result?.error?.message);
           }
-
-          // await sleep(300);
         } catch (err) {
-          console.error(`ERROR on chain ${chainId} `);
+          console.error(`ERROR on chain ${chainId}`);
           console.log(err);
         }
-      }
-      for (const account of Object.keys(dataToPersist)) {
+      });
+      // console.time('chainPromises');
+      await Promise.all(chainPromises);
+      // console.timeEnd('chainPromises');
+
+      const persistPromises = Object.keys(dataToPersist).map(async (account) => {
         const item = {
           TableName: KADENA_ACCOUNTS_BALANCE_TABLE,
           Item: {
@@ -139,9 +147,12 @@ const updateAccountsBalance = async () => {
           },
         };
         await ddbClient.send(new PutCommand(item));
-      }
+      });
+
+      await Promise.all(persistPromises);
     }
   } while (lastEvaluatedKey && accountsResponse?.Items?.length === ACCOUNTS_CHUNK_SIZE);
+  // console.timeEnd('updateAccountsBalance');
   console.log('ACCOUNTS BALANCE UPDATE DONE');
 };
 
@@ -150,5 +161,4 @@ module.exports = updateAccountsBalance;
 /**
  aws dynamodb create-table --table-name kadena-accounts --attribute-definitions AttributeName=account,AttributeType=S --key-schema AttributeName=account,KeyType=HASH --provisioned-throughput ReadCapacityUnits=1,WriteCapacityUnits=1 --endpoint-url http://localhost:8000
  aws dynamodb create-table --table-name kadena-accounts-balance --attribute-definitions AttributeName=account,AttributeType=S AttributeName=date,AttributeType=S --key-schema AttributeName=account,KeyType=HASH AttributeName=date,KeyType=RANGE --provisioned-throughput ReadCapacityUnits=1,WriteCapacityUnits=1 --endpoint-url http://localhost:8000
-
  */
