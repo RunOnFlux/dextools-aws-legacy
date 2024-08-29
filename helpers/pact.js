@@ -4,7 +4,7 @@ const GAS_PRICE = 0.00000001;
 const creationTime = () => Math.round(new Date().getTime() / 1000) - 10;
 const TTL = 1000000;
 
-const CHAINWEB_HOSTS = [`https://chainweb.ecko.finance`, 'https://kadena2.app.runonflux.io', 'https://api.chainweb.com'];
+const CHAINWEB_HOSTS = [`https://kadena.dapp.runonflux.io`, 'https://api.chainweb.com'];
 
 const getNetwork = (url, chainId) => `${url}/chainweb/0.0/mainnet01/chain/${chainId}/pact`;
 
